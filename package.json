@@ -1,0 +1,16 @@
+{
+  "name": "apicmd",
+  "version": "0.1.0",
+  "module": "bin/apicmd.ts",
+  "type": "module",
+  "bin": {
+    "apicmd": "bin/apicmd.ts"
+  },
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
