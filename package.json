@@ -1,12 +1,30 @@
 {
   "name": "apicmd",
   "version": "0.1.0",
+  "description": "Turn any API into a CLI. Designed for LLM agents.",
   "module": "bin/apicmd.ts",
   "type": "module",
   "bin": {
     "apicmd": "bin/apicmd.ts"
   },
-  "private": true,
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "keywords": [
+    "cli",
+    "api",
+    "openapi",
+    "rest",
+    "llm",
+    "agent"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/charlie103721/apicmd"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
