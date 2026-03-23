@@ -89,7 +89,14 @@ async function init(initArgs: string[]) {
     name,
     url,
     auth: auth || undefined,
-    specTtlHours: ttl ? Number(ttl) : undefined,
+    specTtlHours: ttl ? (() => {
+      const n = Number(ttl);
+      if (isNaN(n) || n <= 0) {
+        console.error("--ttl must be a positive number (hours)");
+        process.exit(1);
+      }
+      return n;
+    })() : undefined,
     raw: raw || undefined,
   });
 
@@ -166,7 +173,8 @@ async function main() {
       for (const name of apis) {
         const config = loadConfig(name);
         const mode = config?.raw ? "raw" : "spec";
-        console.log(`  ${name.padEnd(20)} ${getBaseUrl(config!)} (${mode})`);
+        if (!config) continue;
+        console.log(`  ${name.padEnd(20)} ${getBaseUrl(config)} (${mode})`);
       }
       console.log();
     }
