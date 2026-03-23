@@ -1,6 +1,6 @@
 {
   "name": "apicmd",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Turn any API into a CLI. Designed for LLM agents.",
   "type": "module",
   "bin": {
