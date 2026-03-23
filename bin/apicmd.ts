@@ -103,7 +103,17 @@ async function refreshSpec(config: ApiConfig): Promise<ApiConfig> {
       }
       process.exit(1);
     }
-    config.spec = (await res.json()) as any;
+    const text = await res.text();
+    const MAX_SPEC_SIZE = 10 * 1024 * 1024;
+    if (text.length > MAX_SPEC_SIZE) {
+      console.error(`Spec too large (${(text.length / 1024 / 1024).toFixed(1)} MB). Max is 10 MB.`);
+      if (config.spec) {
+        console.error("Using cached spec.");
+        return config;
+      }
+      process.exit(1);
+    }
+    config.spec = JSON.parse(text);
     config.specFetchedAt = new Date().toISOString();
     saveConfig(config);
   } catch (err: any) {
