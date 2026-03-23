@@ -49,9 +49,9 @@ async function init(initArgs: string[]) {
 
   for (let i = 0; i < initArgs.length; i++) {
     if (initArgs[i] === "--name" && initArgs[i + 1]) name = initArgs[++i]!;
-    if (initArgs[i] === "--auth" && initArgs[i + 1]) auth = initArgs[++i]!;
-    if (initArgs[i] === "--ttl" && initArgs[i + 1]) ttl = initArgs[++i]!;
-    if (initArgs[i] === "--raw") raw = true;
+    else if (initArgs[i] === "--auth" && initArgs[i + 1]) auth = initArgs[++i]!;
+    else if (initArgs[i] === "--ttl" && initArgs[i + 1]) ttl = initArgs[++i]!;
+    else if (initArgs[i] === "--raw") raw = true;
   }
 
   if (!name) {
@@ -173,7 +173,7 @@ async function main() {
         for (const h of config.history) {
           const m = h.method.padEnd(maxMethod + 1);
           const p = h.path.padEnd(maxPath + 2);
-          const params = h.params.length ? h.params.map((p) => `--${p}`).join(" ") : "";
+          const params = h.params.length ? h.params.map((param) => `--${param}`).join(" ") : "";
           console.log(`  ${m} ${p} ${params}`);
         }
         console.log();

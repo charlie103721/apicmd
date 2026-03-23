@@ -30,14 +30,21 @@ function resolveAuth(config: ApiConfig): string | null {
   return config.auth.replace(/\$(\w+)/g, (_, name) => process.env[name] || "");
 }
 
+/** Strip /api prefix from path if baseUrl already ends with /api */
+function stripDuplicateApiPrefix(baseUrl: string, path: string): string {
+  if (baseUrl.endsWith("/api") && path.startsWith("/api/")) {
+    return path.slice(4);
+  }
+  return path;
+}
+
 async function doFetch(url: string, method: string, auth: string | null, body: any | null) {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const headers: Record<string, string> = {};
   if (auth) headers["Authorization"] = auth;
 
   const fetchOpts: RequestInit = { method, headers };
   if (body && method !== "GET") {
+    headers["Content-Type"] = "application/json";
     fetchOpts.body = JSON.stringify(body);
   }
 
@@ -101,10 +108,7 @@ export async function executeRaw(
     }
   }
 
-  // Strip /api prefix if baseUrl already ends with /api
-  if (baseUrl.endsWith("/api") && url.startsWith("/api/")) {
-    url = url.slice(4);
-  }
+  url = stripDuplicateApiPrefix(baseUrl, url);
 
   const status = await doFetch(baseUrl + url, method, auth, body);
   // Record with template path (original {placeholders}), not resolved URL
@@ -139,9 +143,7 @@ function buildUrl(
   }
   if (queryParts.length) url += "?" + queryParts.join("&");
 
-  if (baseUrl.endsWith("/api") && url.startsWith("/api/")) {
-    url = url.slice(4);
-  }
+  url = stripDuplicateApiPrefix(baseUrl, url);
 
   return baseUrl + url;
 }
