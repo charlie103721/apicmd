@@ -43,11 +43,24 @@ export function isSpecStale(config: ApiConfig): boolean {
   return age > ttlMs;
 }
 
+const SAFE_NAME_RE = /^[a-zA-Z0-9_-]+$/;
+
+/** Validate that a config name contains no path traversal characters. */
+export function safeName(name: string): string {
+  if (!SAFE_NAME_RE.test(name)) {
+    throw new Error(
+      `Invalid API name "${name}". Only letters, digits, hyphens, and underscores are allowed.`
+    );
+  }
+  return name;
+}
+
 function ensureDir() {
   if (!existsSync(CONFIG_DIR)) mkdirSync(CONFIG_DIR, { recursive: true });
 }
 
 export function saveConfig(config: ApiConfig) {
+  safeName(config.name);
   ensureDir();
   writeFileSync(
     join(CONFIG_DIR, `${config.name}.json`),
@@ -56,12 +69,14 @@ export function saveConfig(config: ApiConfig) {
 }
 
 export function loadConfig(name: string): ApiConfig | null {
+  safeName(name);
   const path = join(CONFIG_DIR, `${name}.json`);
   if (!existsSync(path)) return null;
   return JSON.parse(readFileSync(path, "utf-8"));
 }
 
 export function recordCall(name: string, method: string, path: string, params: string[], status: number) {
+  safeName(name);
   const config = loadConfig(name);
   if (!config) return;
 
