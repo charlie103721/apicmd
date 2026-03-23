@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { saveConfig, loadConfig, listConfigs, isSpecStale, getBaseUrl } from "../src/config";
+import { saveConfig, loadConfig, listConfigs, isSpecStale, getBaseUrl, safeName } from "../src/config";
 import type { ApiConfig } from "../src/config";
 import { showApiHelp, showOperationHelp } from "../src/help";
 import { execute, executeRaw } from "../src/execute";
@@ -56,6 +56,13 @@ async function init(initArgs: string[]) {
 
   if (!name) {
     console.error("--name is required");
+    process.exit(1);
+  }
+
+  try {
+    safeName(name);
+  } catch (err: any) {
+    console.error(err.message);
     process.exit(1);
   }
 
