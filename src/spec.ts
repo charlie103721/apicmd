@@ -88,13 +88,23 @@ export function extractOperations(spec: any): OperationInfo[] {
   const paths = spec.paths || {};
 
   for (const [path, methods] of Object.entries<any>(paths)) {
+    const pathLevelParams = (methods as any).parameters || [];
+
     for (const [method, op] of Object.entries<any>(methods)) {
       if (!HTTP_METHODS.has(method.toLowerCase())) continue;
+
+      // Merge path-level and operation-level params; operation params override
+      const allParams = [...pathLevelParams, ...(op.parameters || [])];
+      const paramMap = new Map();
+      for (const p of allParams) {
+        paramMap.set(`${p.in}:${p.name}`, p);
+      }
+      const mergedParams = [...paramMap.values()];
 
       const pathParams: string[] = [];
       const queryParams: ParamInfo[] = [];
 
-      for (const p of op.parameters || []) {
+      for (const p of mergedParams) {
         if (p.in === "path") pathParams.push(p.name);
         if (p.in === "query")
           queryParams.push({
