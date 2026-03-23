@@ -21,15 +21,17 @@ const HTTP_METHODS = new Set(["get", "post", "put", "patch", "delete", "head", "
  * Resolve $ref pointers in an OpenAPI spec.
  * e.g. { "$ref": "#/components/schemas/Foo" } → the actual schema object
  */
-function resolveRef(spec: any, obj: any): any {
+function resolveRef(spec: any, obj: any, seen = new Set<string>()): any {
   if (!obj || typeof obj !== "object") return obj;
   if (obj.$ref) {
+    if (seen.has(obj.$ref)) return obj;
+    seen.add(obj.$ref);
     const path = obj.$ref.replace(/^#\//, "").split("/");
     let resolved = spec;
     for (const seg of path) {
       resolved = resolved?.[seg];
     }
-    return resolved || obj;
+    return resolved ? resolveRef(spec, resolved, seen) : obj;
   }
   return obj;
 }
@@ -94,7 +96,7 @@ export function extractOperations(spec: any): OperationInfo[] {
       if (!HTTP_METHODS.has(method.toLowerCase())) continue;
 
       // Merge path-level and operation-level params; operation params override
-      const allParams = [...pathLevelParams, ...(op.parameters || [])];
+      const allParams = [...pathLevelParams, ...(op.parameters || [])].map((p: any) => resolveRef(spec, p));
       const paramMap = new Map();
       for (const p of allParams) {
         paramMap.set(`${p.in}:${p.name}`, p);
@@ -119,7 +121,16 @@ export function extractOperations(spec: any): OperationInfo[] {
       const content = op.requestBody?.content?.["application/json"];
       if (content?.schema) {
         bodySchema = resolveRef(spec, content.schema);
-        requiredBody = bodySchema.required || [];
+        if (bodySchema?.allOf) {
+          const merged: any = { type: "object", properties: {}, required: [] };
+          for (const part of bodySchema.allOf) {
+            const resolved = resolveRef(spec, part);
+            Object.assign(merged.properties, resolved?.properties || {});
+            merged.required.push(...(resolved?.required || []));
+          }
+          bodySchema = merged;
+        }
+        requiredBody = bodySchema?.required || [];
       }
 
       ops.push({
