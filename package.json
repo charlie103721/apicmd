@@ -1,17 +1,19 @@
 {
   "name": "apicmd",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Turn any API into a CLI. Designed for LLM agents.",
-  "module": "bin/apicmd.ts",
   "type": "module",
   "bin": {
-    "apicmd": "bin/apicmd.ts"
+    "apicmd": "dist/apicmd.js"
   },
   "files": [
-    "bin",
-    "src",
+    "dist",
     "README.md"
   ],
+  "scripts": {
+    "build": "bun build bin/apicmd.ts --outdir dist --target node --format esm && node -e \"const fs=require('fs');const f='dist/apicmd.js';let c=fs.readFileSync(f,'utf8');c=c.replace(/^#!.*\\n(\\/\\/ @bun\\n)?/,'#!/usr/bin/env node\\n');fs.writeFileSync(f,c);fs.chmodSync(f,0o755)\"",
+    "prepublishOnly": "bun run build"
+  },
   "keywords": [
     "cli",
     "api",
@@ -20,6 +22,9 @@
     "llm",
     "agent"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -27,8 +32,5 @@
   },
   "devDependencies": {
     "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
   }
 }
