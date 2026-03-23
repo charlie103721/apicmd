@@ -1,4 +1,4 @@
-import { extractOperations } from "./spec";
+import { extractOperations, findOperation } from "./spec";
 import type { ApiConfig } from "./config";
 
 export function showApiHelp(config: ApiConfig) {
@@ -6,6 +6,11 @@ export function showApiHelp(config: ApiConfig) {
   const title = config.spec.info?.title || config.name;
 
   console.log(`\n${title} (${config.name})\n`);
+
+  if (ops.length === 0) {
+    console.log("No operations found.");
+    return;
+  }
 
   // Group by tag or just list
   const maxId = Math.max(...ops.map((o) => o.operationId.length));
@@ -32,8 +37,7 @@ export function showApiHelp(config: ApiConfig) {
 }
 
 export function showOperationHelp(config: ApiConfig, operationId: string) {
-  const ops = extractOperations(config.spec);
-  const op = ops.find((o) => o.operationId === operationId);
+  const op = findOperation(config.spec, operationId);
   if (!op) {
     console.error(`Unknown operation: ${operationId}`);
     process.exit(1);
