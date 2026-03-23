@@ -128,8 +128,13 @@ async function refreshSpec(config: ApiConfig): Promise<ApiConfig> {
     if (res.status >= 300 && res.status < 400) {
       const location = res.headers.get("Location");
       if (location) {
-        console.error(`Spec URL redirected to ${location} — re-fetching without auth.`);
-        res = await fetch(location);
+        const redirectUrl = new URL(location, config.url);
+        if (redirectUrl.protocol !== "http:" && redirectUrl.protocol !== "https:") {
+          console.error(`Spec redirect to unsafe scheme: ${redirectUrl.protocol}`);
+          process.exit(1);
+        }
+        console.error(`Spec URL redirected to ${redirectUrl.href} — re-fetching without auth.`);
+        res = await fetch(redirectUrl.href);
       }
     }
     if (!res.ok) {

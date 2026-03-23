@@ -168,11 +168,18 @@ export function extractOperations(spec: any): OperationInfo[] {
     }
   }
 
+  const allIds = new Set(ops.map(o => o.operationId));
   const idCount = new Map<string, number>();
   for (const op of ops) {
-    const count = idCount.get(op.operationId) || 0;
+    let count = idCount.get(op.operationId) || 0;
     if (count > 0) {
-      op.operationId = `${op.operationId}${count + 1}`;
+      let suffix = count + 1;
+      let candidate: string;
+      do {
+        candidate = `${op.operationId}${suffix++}`;
+      } while (allIds.has(candidate));
+      op.operationId = candidate;
+      allIds.add(op.operationId);
     }
     idCount.set(op.operationId, count + 1);
   }

@@ -190,6 +190,17 @@ function buildBody(
     }
   }
 
+  if (op.bodySchema.additionalProperties !== false) {
+    for (const [k, v] of Object.entries(params)) {
+      if (body[k] === undefined && !op.pathParams.includes(k) && !op.queryParams.some(q => q.name === k)) {
+        if (v === "true") body[k] = true;
+        else if (v === "false") body[k] = false;
+        else if (!isNaN(Number(v)) && v !== "") body[k] = Number(v);
+        else body[k] = v;
+      }
+    }
+  }
+
   for (const r of op.requiredBody) {
     if (body[r] === undefined) {
       console.error(`Missing required body param: --${r}`);
