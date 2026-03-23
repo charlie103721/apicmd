@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, chmodSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, chmodSync, renameSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 
@@ -46,7 +46,9 @@ export function getBaseUrl(config: ApiConfig): string {
 export function isSpecStale(config: ApiConfig): boolean {
   if (!config.spec || !config.specFetchedAt) return true;
   const ttlMs = (config.specTtlHours ?? DEFAULT_SPEC_TTL_HOURS) * 60 * 60 * 1000;
-  const age = Date.now() - new Date(config.specFetchedAt).getTime();
+  const fetchedAt = new Date(config.specFetchedAt).getTime();
+  if (isNaN(fetchedAt)) return true;
+  const age = Date.now() - fetchedAt;
   return age > ttlMs;
 }
 
@@ -67,11 +69,12 @@ function ensureDir() {
 }
 
 export function saveConfig(config: ApiConfig) {
-  safeName(config.name);
   ensureDir();
-  const filePath = join(CONFIG_DIR, `${config.name}.json`);
-  writeFileSync(filePath, JSON.stringify(config, null, 2));
-  chmodSync(filePath, 0o600);
+  const filePath = join(CONFIG_DIR, `${safeName(config.name)}.json`);
+  const tmpPath = filePath + ".tmp." + process.pid;
+  writeFileSync(tmpPath, JSON.stringify(config, null, 2));
+  chmodSync(tmpPath, 0o600);
+  renameSync(tmpPath, filePath);
 }
 
 export function loadConfig(name: string): ApiConfig | null {
