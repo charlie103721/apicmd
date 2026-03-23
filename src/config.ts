@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, chmodSync, renameSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, chmodSync, renameSync, unlinkSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 
@@ -72,9 +72,14 @@ export function saveConfig(config: ApiConfig) {
   ensureDir();
   const filePath = join(CONFIG_DIR, `${safeName(config.name)}.json`);
   const tmpPath = filePath + ".tmp." + process.pid;
-  writeFileSync(tmpPath, JSON.stringify(config, null, 2));
-  chmodSync(tmpPath, 0o600);
-  renameSync(tmpPath, filePath);
+  try {
+    writeFileSync(tmpPath, JSON.stringify(config, null, 2));
+    chmodSync(tmpPath, 0o600);
+    renameSync(tmpPath, filePath);
+  } catch (err) {
+    try { unlinkSync(tmpPath); } catch {}
+    throw err;
+  }
 }
 
 export function loadConfig(name: string): ApiConfig | null {

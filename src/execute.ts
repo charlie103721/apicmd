@@ -174,7 +174,12 @@ function buildBody(
   for (const [key, schema] of Object.entries<any>(props)) {
     if (params[key] !== undefined) {
       if (schema.type === "number" || schema.type === "integer") {
-        body[key] = Number(params[key]);
+        const n = Number(params[key]);
+        if (isNaN(n)) {
+          console.error(`--${key} must be a number, got: ${params[key]}`);
+          process.exit(1);
+        }
+        body[key] = n;
       } else if (schema.type === "boolean") {
         body[key] = params[key] === "true";
       } else if (schema.type === "array") {
@@ -212,6 +217,18 @@ export async function execute(
   const auth = resolveAuth(config);
   const url = buildUrl(baseUrl, op, params);
   const body = buildBody(op, params);
+
+  // Warn on unconsumed params
+  const consumed = new Set<string>([
+    ...op.pathParams,
+    ...op.queryParams.map(q => q.name),
+    ...Object.keys(body || {}),
+  ]);
+  for (const key of Object.keys(params)) {
+    if (!consumed.has(key)) {
+      console.error(`Warning: unknown param --${key} (ignored)`);
+    }
+  }
 
   const status = await doFetch(url, op.method, auth, body);
   recordCall(config.name, op.method, op.path, Object.keys(params), status!);
