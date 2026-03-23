@@ -73,7 +73,11 @@ async function init(initArgs: string[]) {
 
   // Validate URL
   try {
-    new URL(url);
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      console.error(`Unsupported URL scheme: ${parsed.protocol} — only http and https are allowed.`);
+      process.exit(1);
+    }
   } catch {
     console.error(`Invalid URL: ${url}`);
     process.exit(1);
