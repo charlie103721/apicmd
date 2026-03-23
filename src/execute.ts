@@ -21,10 +21,6 @@ export function parseArgs(args: string[]): Record<string, string> {
   return result;
 }
 
-function resolveBaseUrl(config: ApiConfig): string {
-  return getBaseUrl(config);
-}
-
 function resolveAuth(config: ApiConfig): string | null {
   if (!config.auth) return null;
   return config.auth.replace(/\$(\w+)/g, (_, name) => process.env[name] || "");
@@ -44,11 +40,12 @@ async function doFetch(url: string, method: string, auth: string | null, body: a
   try {
     const res = await fetch(url, fetchOpts);
     const text = await res.text();
+    const out = res.ok ? console.log : console.error;
     try {
       const json = JSON.parse(text);
-      console.log(JSON.stringify(json, null, 2));
+      out(JSON.stringify(json, null, 2));
     } catch {
-      console.log(text);
+      out(text);
     }
     if (!res.ok) process.exit(1);
     return res.status;
@@ -67,7 +64,7 @@ export async function executeRaw(
   rawArgs: string[]
 ) {
   const params = parseArgs(rawArgs);
-  const baseUrl = resolveBaseUrl(config);
+  const baseUrl = getBaseUrl(config);
   const auth = resolveAuth(config);
 
   // Replace {param} placeholders in path
@@ -192,7 +189,7 @@ export async function execute(
   }
 
   const params = parseArgs(rawArgs);
-  const baseUrl = resolveBaseUrl(config);
+  const baseUrl = getBaseUrl(config);
   const auth = resolveAuth(config);
   const url = buildUrl(baseUrl, op, params);
   const body = buildBody(op, params);

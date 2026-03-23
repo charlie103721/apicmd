@@ -72,11 +72,20 @@ async function init(initArgs: string[]) {
     process.exit(1);
   }
 
+  let specTtlHours: number | undefined;
+  if (ttl) {
+    specTtlHours = Number(ttl);
+    if (isNaN(specTtlHours) || specTtlHours <= 0) {
+      console.error("--ttl must be a positive number (hours)");
+      process.exit(1);
+    }
+  }
+
   saveConfig({
     name,
     url,
     auth: auth || undefined,
-    specTtlHours: ttl ? Number(ttl) : undefined,
+    specTtlHours,
     raw: raw || undefined,
   });
 
@@ -137,8 +146,9 @@ async function main() {
       console.log("\nRegistered APIs:\n");
       for (const name of apis) {
         const config = loadConfig(name);
-        const mode = config?.raw ? "raw" : "spec";
-        console.log(`  ${name.padEnd(20)} ${getBaseUrl(config!)} (${mode})`);
+        if (!config) continue;
+        const mode = config.raw ? "raw" : "spec";
+        console.log(`  ${name.padEnd(20)} ${getBaseUrl(config)} (${mode})`);
       }
       console.log();
     }
