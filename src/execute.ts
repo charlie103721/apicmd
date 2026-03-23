@@ -8,14 +8,19 @@ export function parseArgs(args: string[]): Record<string, string> {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
     if (arg.startsWith("--")) {
-      const key = arg.slice(2);
+      let key = arg.slice(2);
       if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
-      const next = args[i + 1] as string | undefined;
-      if (next && !next.startsWith("--")) {
-        result[key] = next;
-        i++;
+      const eqIdx = key.indexOf("=");
+      if (eqIdx !== -1) {
+        result[key.slice(0, eqIdx)] = key.slice(eqIdx + 1);
       } else {
-        result[key] = "true";
+        const next = args[i + 1] as string | undefined;
+        if (next && !next.startsWith("--")) {
+          result[key] = next;
+          i++;
+        } else {
+          result[key] = "true";
+        }
       }
     }
   }

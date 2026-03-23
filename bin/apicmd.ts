@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 
+import { readFileSync } from "fs";
 import { saveConfig, loadConfig, listConfigs, isSpecStale, getBaseUrl, safeName } from "../src/config";
 import type { ApiConfig } from "../src/config";
 import { showApiHelp, showOperationHelp } from "../src/help";
@@ -160,6 +161,12 @@ async function refreshSpec(config: ApiConfig): Promise<ApiConfig> {
 async function main() {
   if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
     usage();
+    process.exit(0);
+  }
+
+  if (args[0] === "--version" || args[0] === "-v") {
+    const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf-8"));
+    console.log(pkg.version);
     process.exit(0);
   }
 
