@@ -21,7 +21,7 @@ const HTTP_METHODS = new Set(["get", "post", "put", "patch", "delete", "head", "
  * Resolve $ref pointers in an OpenAPI spec.
  * e.g. { "$ref": "#/components/schemas/Foo" } → the actual schema object
  */
-function resolveRef(spec: any, obj: any, seen = new Set<string>()): any {
+export function resolveRef(spec: any, obj: any, seen = new Set<string>()): any {
   if (!obj || typeof obj !== "object") return obj;
   if (obj.$ref) {
     if (seen.has(obj.$ref)) return obj;
@@ -40,7 +40,7 @@ function resolveRef(spec: any, obj: any, seen = new Set<string>()): any {
  * Recursively resolve all $ref pointers in nested objects/arrays.
  * Handles property-level refs that resolveRef misses.
  */
-function deepResolveRefs(spec: any, obj: any, seen = new Set<string>()): any {
+export function deepResolveRefs(spec: any, obj: any, seen = new Set<string>()): any {
   if (!obj || typeof obj !== "object") return obj;
   if (Array.isArray(obj)) return obj.map(item => deepResolveRefs(spec, item, new Set(seen)));
   if (obj.$ref) {
@@ -70,7 +70,7 @@ function deepResolveRefs(spec: any, obj: any, seen = new Set<string>()): any {
  * GET  /projects/{projectId}/issues → getProjectsIssuesByProjectId
  * GET  /projects/{projectId}/issues/{issueId} → getProjectsIssuesByProjectIdAndIssueId
  */
-function deriveOperationId(method: string, path: string): string {
+export function deriveOperationId(method: string, path: string): string {
   // Remove /api prefix
   const p = path.replace(/^\/api\//, "/");
   const segments = p.split("/").filter(Boolean);

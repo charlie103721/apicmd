@@ -28,7 +28,7 @@ export function parseArgs(args: string[]): Record<string, string> {
   return result;
 }
 
-function resolveAuth(config: ApiConfig): string | null {
+export function resolveAuth(config: ApiConfig): string | null {
   if (!config.auth) return null;
   return config.auth.replace(/\$\{?(\w+)\}?/g, (_, name) => {
     const val = process.env[name];
@@ -40,7 +40,7 @@ function resolveAuth(config: ApiConfig): string | null {
 }
 
 /** Strip /api prefix from path if baseUrl already ends with /api */
-function stripDuplicateApiPrefix(baseUrl: string, path: string): string {
+export function stripDuplicateApiPrefix(baseUrl: string, path: string): string {
   if (baseUrl.endsWith("/api") && path.startsWith("/api/")) {
     return path.slice(4);
   }
@@ -127,7 +127,7 @@ export async function executeRaw(
 
 // --- Spec mode: apicmd <name> <operationId> --param value ---
 
-function buildUrl(
+export function buildUrl(
   baseUrl: string,
   op: OperationInfo,
   params: Record<string, string>
@@ -162,7 +162,7 @@ function buildUrl(
   return baseUrl + url;
 }
 
-function buildBody(
+export function buildBody(
   op: OperationInfo,
   params: Record<string, string>
 ): any | null {
