@@ -37,6 +37,28 @@ function resolveRef(spec: any, obj: any, seen = new Set<string>()): any {
 }
 
 /**
+ * Recursively resolve all $ref pointers in nested objects/arrays.
+ * Handles property-level refs that resolveRef misses.
+ */
+function deepResolveRefs(spec: any, obj: any, seen = new Set<string>()): any {
+  if (!obj || typeof obj !== "object") return obj;
+  if (Array.isArray(obj)) return obj.map(item => deepResolveRefs(spec, item, new Set(seen)));
+  if (obj.$ref) {
+    if (seen.has(obj.$ref)) return obj;
+    seen.add(obj.$ref);
+    const refPath = obj.$ref.replace(/^#\//, "").split("/");
+    let resolved = spec;
+    for (const seg of refPath) resolved = resolved?.[seg];
+    return resolved ? deepResolveRefs(spec, resolved, seen) : obj;
+  }
+  const result: any = {};
+  for (const [key, val] of Object.entries(obj)) {
+    result[key] = deepResolveRefs(spec, val, new Set(seen));
+  }
+  return result;
+}
+
+/**
  * Auto-generate a unique operationId from method + path.
  * Includes path param names with "By" to disambiguate.
  *
@@ -120,11 +142,11 @@ export function extractOperations(spec: any): OperationInfo[] {
       let requiredBody: string[] = [];
       const content = op.requestBody?.content?.["application/json"];
       if (content?.schema) {
-        bodySchema = resolveRef(spec, content.schema);
+        bodySchema = deepResolveRefs(spec, content.schema);
         if (bodySchema?.allOf) {
-          const merged: any = { type: "object", properties: {}, required: [] };
+          const merged: any = { type: "object", properties: { ...(bodySchema.properties || {}) }, required: [...(bodySchema.required || [])] };
           for (const part of bodySchema.allOf) {
-            const resolved = resolveRef(spec, part);
+            const resolved = deepResolveRefs(spec, part);
             Object.assign(merged.properties, resolved?.properties || {});
             merged.required.push(...(resolved?.required || []));
           }
@@ -144,6 +166,15 @@ export function extractOperations(spec: any): OperationInfo[] {
         requiredBody,
       });
     }
+  }
+
+  const idCount = new Map<string, number>();
+  for (const op of ops) {
+    const count = idCount.get(op.operationId) || 0;
+    if (count > 0) {
+      op.operationId = `${op.operationId}${count + 1}`;
+    }
+    idCount.set(op.operationId, count + 1);
   }
 
   return ops;
