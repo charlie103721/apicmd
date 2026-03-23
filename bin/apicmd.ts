@@ -107,7 +107,12 @@ async function refreshSpec(config: ApiConfig): Promise<ApiConfig> {
   if (config.raw) return config;
 
   try {
-    const res = await fetch(config.url);
+    const headers: Record<string, string> = {};
+    if (config.auth) {
+      const authVal = config.auth.replace(/\$(\w+)/g, (_, name) => process.env[name] || "");
+      if (authVal) headers["Authorization"] = authVal;
+    }
+    const res = await fetch(config.url, { headers });
     if (!res.ok) {
       console.error(`Failed to fetch spec: ${res.status} ${res.statusText}`);
       if (config.spec) {

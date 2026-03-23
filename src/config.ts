@@ -26,11 +26,18 @@ export interface ApiConfig {
   history?: CallRecord[];
 }
 
-/** Derive base URL (protocol + host) from the config URL */
+/** Derive base URL from the config URL, preserving path segments */
 export function getBaseUrl(config: ApiConfig): string {
   try {
     const u = new URL(config.url);
-    return `${u.protocol}//${u.host}`;
+    let path = u.pathname;
+    // In spec mode, strip the spec filename
+    if (!config.raw) {
+      path = path.replace(/\/(openapi|swagger)\.(json|yaml|yml)$/i, "");
+    }
+    // Remove trailing slash
+    path = path.replace(/\/$/, "");
+    return `${u.protocol}//${u.host}${path}`;
   } catch {
     return config.url;
   }

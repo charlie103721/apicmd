@@ -141,6 +141,10 @@ function buildUrl(
 
   const queryParts: string[] = [];
   for (const q of op.queryParams) {
+    if (q.required && !params[q.name]) {
+      console.error(`Missing required query param: --${q.name}`);
+      process.exit(1);
+    }
     if (params[q.name]) {
       queryParts.push(
         `${encodeURIComponent(q.name)}=${encodeURIComponent(params[q.name]!)}`
