@@ -9,17 +9,18 @@ export function parseArgs(args: string[]): Record<string, string> {
     const arg = args[i]!;
     if (arg.startsWith("--")) {
       let key = arg.slice(2);
-      if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
       const eqIdx = key.indexOf("=");
+      const actualKey = eqIdx !== -1 ? key.slice(0, eqIdx) : key;
+      if (actualKey === "__proto__" || actualKey === "constructor" || actualKey === "prototype") continue;
       if (eqIdx !== -1) {
-        result[key.slice(0, eqIdx)] = key.slice(eqIdx + 1);
+        result[actualKey] = key.slice(eqIdx + 1);
       } else {
         const next = args[i + 1] as string | undefined;
         if (next && !next.startsWith("--")) {
-          result[key] = next;
+          result[actualKey] = next;
           i++;
         } else {
-          result[key] = "true";
+          result[actualKey] = "true";
         }
       }
     }
@@ -29,7 +30,7 @@ export function parseArgs(args: string[]): Record<string, string> {
 
 function resolveAuth(config: ApiConfig): string | null {
   if (!config.auth) return null;
-  return config.auth.replace(/\$(\w+)/g, (_, name) => {
+  return config.auth.replace(/\$\{?(\w+)\}?/g, (_, name) => {
     const val = process.env[name];
     if (!val) {
       console.error(`Warning: env var $${name} is not set — auth header may be incomplete.`);

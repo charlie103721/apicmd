@@ -121,10 +121,17 @@ async function refreshSpec(config: ApiConfig): Promise<ApiConfig> {
   try {
     const headers: Record<string, string> = {};
     if (config.auth) {
-      const authVal = config.auth.replace(/\$(\w+)/g, (_, name) => process.env[name] || "");
+      const authVal = config.auth.replace(/\$\{?(\w+)\}?/g, (_, name) => process.env[name] || "");
       if (authVal) headers["Authorization"] = authVal;
     }
-    const res = await fetch(config.url, { headers });
+    let res = await fetch(config.url, { headers, redirect: "manual" });
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("Location");
+      if (location) {
+        console.error(`Spec URL redirected to ${location} — re-fetching without auth.`);
+        res = await fetch(location);
+      }
+    }
     if (!res.ok) {
       console.error(`Failed to fetch spec: ${res.status} ${res.statusText}`);
       if (config.spec) {
