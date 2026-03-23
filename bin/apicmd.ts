@@ -72,6 +72,12 @@ async function init(initArgs: string[]) {
     process.exit(1);
   }
 
+  if (auth && !auth.includes("$")) {
+    console.error(
+      `Warning: --auth value appears to be a literal token. Consider using an env var reference (e.g. 'Bearer $TOKEN') to avoid storing secrets in plaintext.`
+    );
+  }
+
   saveConfig({
     name,
     url,

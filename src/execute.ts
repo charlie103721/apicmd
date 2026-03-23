@@ -27,7 +27,13 @@ function resolveBaseUrl(config: ApiConfig): string {
 
 function resolveAuth(config: ApiConfig): string | null {
   if (!config.auth) return null;
-  return config.auth.replace(/\$(\w+)/g, (_, name) => process.env[name] || "");
+  return config.auth.replace(/\$(\w+)/g, (_, name) => {
+    const val = process.env[name];
+    if (!val) {
+      console.error(`Warning: env var $${name} is not set — auth header may be incomplete.`);
+    }
+    return val || "";
+  });
 }
 
 async function doFetch(url: string, method: string, auth: string | null, body: any | null) {
